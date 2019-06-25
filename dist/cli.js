@@ -3,7 +3,6 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = cli;
 
 var _inquirer = require('inquirer');
 
@@ -28,6 +27,18 @@ var questions = [{
     return true;
   }
 }, {
+  type: 'input',
+  name: 'build',
+  message: 'Enter the path of the build directory: ',
+  default: './build',
+  validate: function validate(value) {
+    if (!(0, _fse.isExists)(value)) {
+      return 'Directory not exists! ';
+    }
+
+    return true;
+  }
+}, {
   type: 'number',
   name: 'quality',
   message: 'Enter the quality (0.1 - 1): ',
@@ -43,10 +54,20 @@ var questions = [{
 
     return true;
   }
+}, {
+  type: 'list',
+  name: 'type',
+  message: 'Choose the compress solution:',
+  choices: [{
+    name: 'Lossy Plugin(s) - mozjpeg, pngquant',
+    value: 'lossy'
+  }, {
+    name: 'Lossless Plugin(s) - jpegtran, optipng',
+    value: 'lossless'
+  }],
+  default: 0
 }];
 
-function cli() {
-  _inquirer2.default.prompt(questions).then(function (answers) {
-    console.log(JSON.stringify(answers, null, '  '));
-  });
-}
+exports.default = async function cli(callback) {
+  callback((await _inquirer2.default.prompt(questions)));
+};

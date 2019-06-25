@@ -11,7 +11,6 @@ export async function isExists(path) {
 export async function ensureOriginal() {
   try {
     await fse.ensureDir(PATH_ORI_IMAGES);
-    DEBUG && console.log(`ensure ${PATH_ORI_IMAGES}`);
   } catch (error) {
     console.log('Error in ensureOriginal()', error);
   }
@@ -20,14 +19,12 @@ export async function ensureOriginal() {
 export async function ensureMinimize() {
   try {
     await fse.ensureDir(PATH_MIN_IMAGES);
-    DEBUG && console.log(`ensure ${PATH_MIN_IMAGES}`);
   } catch (error) {
     console.log('Error in ensureOriginal()', error);
   }
 }
 
 export default function initial() {
-  DEBUG && console.log('initial start');
   ensureOriginal();
   ensureMinimize();
 }

@@ -1,6 +1,10 @@
 import cli from './cli';
 import initial from './fse';
+import compressor from './compressor';
 
+
+// create the required folders
 initial();
 
-cli();
+// get the params from user
+cli(compressor);

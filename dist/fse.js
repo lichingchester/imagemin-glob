@@ -24,7 +24,6 @@ async function isExists(path) {
 async function ensureOriginal() {
   try {
     await _fsExtra2.default.ensureDir(_config.PATH_ORI_IMAGES);
-    _config.DEBUG && console.log('ensure ' + _config.PATH_ORI_IMAGES);
   } catch (error) {
     console.log('Error in ensureOriginal()', error);
   }
@@ -33,14 +32,12 @@ async function ensureOriginal() {
 async function ensureMinimize() {
   try {
     await _fsExtra2.default.ensureDir(_config.PATH_MIN_IMAGES);
-    _config.DEBUG && console.log('ensure ' + _config.PATH_MIN_IMAGES);
   } catch (error) {
     console.log('Error in ensureOriginal()', error);
   }
 }
 
 function initial() {
-  _config.DEBUG && console.log('initial start');
   ensureOriginal();
   ensureMinimize();
 }
