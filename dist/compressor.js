@@ -31,27 +31,28 @@ var _glob2 = _interopRequireDefault(_glob);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// glob("images/**/*.{jpg,png}", (er, files) => {
-//   files.forEach((path) => {
-//     const output = path.substring(0, path.lastIndexOf("/"));
+async function compile(path, build, quality, type, output) {
+  var plugin = [];
+  if (type === 'lossy') {
+    plugin = [(0, _imageminMozjpeg2.default)({
+      quality: quality * 100
+    }), (0, _imageminPngquant2.default)({
+      quality: [quality, 1]
+    })];
+  } else {
+    plugin = [(0, _imageminJpegtran2.default)({
+      quality: quality * 100
+    }), (0, _imageminOptipng2.default)({
+      quality: [quality, 1]
+    })];
+  }
 
-//     (async () => {
-//     	const files = await imagemin([path], `build/${output}`, {
-//     		plugins: [
-//     			imageminMozjpeg({
-//             quality: 85
-//           }),
-//     			imageminPngquant({
-//             quality: [0.85,1]
-//           })
-//     		]
-//     	});
+  var files = await (0, _imagemin2.default)([path], build + '/' + output, {
+    plugins: plugin
+  });
 
-//     	console.log(files);
-//     })();
-//   })
-// });
-
+  console.log(files);
+}
 
 function compress(_ref) {
   var path = _ref.path,
@@ -59,13 +60,10 @@ function compress(_ref) {
       quality = _ref.quality,
       type = _ref.type;
 
-  (0, _glob2.default)('images/**/*.{jpg,png}', function (er, files) {
-    // files.forEach((path) => {
-    //   const output = path.substring(0, path.lastIndexOf('/'));
-    //   console.log(output);
-    // })();
-    console.log(files);
+  (0, _glob2.default)(path + '/**/*.{jpg,png}', function (er, files) {
+    files.forEach(function (file) {
+      var output = file.substring(0, file.lastIndexOf('images/'));
+      compile(path, build, quality, type, output);
+    });
   });
-
-  // console.log(settings);
 }

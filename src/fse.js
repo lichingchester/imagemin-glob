@@ -1,7 +1,15 @@
 import fse from 'fs-extra';
 import {
-  DEBUG, PATH_ORI_IMAGES, PATH_MIN_IMAGES,
+  PATH_ORI_IMAGES, PATH_MIN_IMAGES,
 } from './config';
+
+export async function emptyDirectory(path) {
+  try {
+    await fse.emptyDir(path);
+  } catch (error) {
+    console.log('Error in emptyDirectory()', error);
+  }
+}
 
 export async function isExists(path) {
   const exists = await fse.pathExists(path);
@@ -27,4 +35,7 @@ export async function ensureMinimize() {
 export default function initial() {
   ensureOriginal();
   ensureMinimize();
+
+  // remove directory
+  emptyDirectory('./build');
 }

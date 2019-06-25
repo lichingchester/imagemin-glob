@@ -1,33 +1,39 @@
 import imagemin from 'imagemin';
 import imageminJpegtran from 'imagemin-jpegtran';
 import imageminMozjpeg from 'imagemin-mozjpeg';
-
 import imageminOptipng from 'imagemin-optipng';
 import imageminPngquant from 'imagemin-pngquant';
 
 import glob from 'glob';
 
-// glob("images/**/*.{jpg,png}", (er, files) => {
-//   files.forEach((path) => {
-//     const output = path.substring(0, path.lastIndexOf("/"));
+async function compile(path, build, quality, type, output) {
+  let plugin = [];
+  if (type === 'lossy') {
+    plugin = [
+      imageminMozjpeg({
+        quality: quality * 100,
+      }),
+      imageminPngquant({
+        quality: [quality, 1],
+      }),
+    ];
+  } else {
+    plugin = [
+      imageminJpegtran({
+        quality: quality * 100,
+      }),
+      imageminOptipng({
+        quality: [quality, 1],
+      }),
+    ];
+  }
 
-//     (async () => {
-//     	const files = await imagemin([path], `build/${output}`, {
-//     		plugins: [
-//     			imageminMozjpeg({
-//             quality: 85
-//           }),
-//     			imageminPngquant({
-//             quality: [0.85,1]
-//           })
-//     		]
-//     	});
+  const files = await imagemin([path], `${build}/${output}`, {
+    plugins: plugin,
+  });
 
-//     	console.log(files);
-//     })();
-//   })
-// });
-
+  console.log(files);
+}
 
 export default function compress({
   path,
@@ -35,14 +41,10 @@ export default function compress({
   quality,
   type,
 }) {
-  glob('images/**/*.{jpg,png}', (er, files) => {
-    // files.forEach((path) => {
-    //   const output = path.substring(0, path.lastIndexOf('/'));
-    //   console.log(output);
-    // })();
-    console.log(files);
+  glob(`${path}/**/*.{jpg,png}`, (er, files) => {
+    files.forEach((file) => {
+      const output = file.substring(0, file.lastIndexOf('images/'));
+      compile(path, build, quality, type, output);
+    });
   });
-
-
-  // console.log(settings);
 }
