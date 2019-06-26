@@ -32,7 +32,7 @@ async function compile(path, build, quality, type, output) {
     plugins: plugin,
   });
 
-  console.log(files);
+  // console.log(files);
 }
 
 export default function compress({
@@ -47,4 +47,6 @@ export default function compress({
       compile(path, build, quality, type, output);
     });
   });
+
+  console.log('compress end');
 }

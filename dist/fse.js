@@ -7,7 +7,6 @@ exports.emptyDirectory = emptyDirectory;
 exports.isExists = isExists;
 exports.ensureOriginal = ensureOriginal;
 exports.ensureMinimize = ensureMinimize;
-exports.default = initial;
 
 var _fsExtra = require('fs-extra');
 
@@ -17,9 +16,10 @@ var _config = require('./config');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-async function emptyDirectory(path) {
+function emptyDirectory(path) {
   try {
-    await _fsExtra2.default.emptyDir(path);
+    return _fsExtra2.default.emptyDir(path);
+    console.log('emptyDirectory', path);
   } catch (error) {
     console.log('Error in emptyDirectory()', error);
   }
@@ -30,26 +30,30 @@ async function isExists(path) {
   return exists;
 }
 
-async function ensureOriginal() {
+function ensureOriginal() {
+  // try {
+  return _fsExtra2.default.ensureDir(_config.PATH_ORI_IMAGES);
+  // console.log('ensureOriginal');
+  // } catch (error) {
+  // console.log('Error in ensureOriginal()', error);
+  // }
+}
+
+function ensureMinimize() {
   try {
-    await _fsExtra2.default.ensureDir(_config.PATH_ORI_IMAGES);
+    return _fsExtra2.default.ensureDir(_config.PATH_MIN_IMAGES);
+    console.log('ensureMinimize');
   } catch (error) {
     console.log('Error in ensureOriginal()', error);
   }
 }
 
-async function ensureMinimize() {
-  try {
-    await _fsExtra2.default.ensureDir(_config.PATH_MIN_IMAGES);
-  } catch (error) {
-    console.log('Error in ensureOriginal()', error);
-  }
-}
-
-function initial() {
-  ensureOriginal();
-  ensureMinimize();
+exports.default = async function initial() {
+  await ensureOriginal();
+  await ensureMinimize();
 
   // remove directory
-  emptyDirectory('./build');
-}
+  await emptyDirectory('./build');
+
+  console.log('end initial');
+};

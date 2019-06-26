@@ -65,5 +65,6 @@ const questions = [
 ];
 
 export default async function cli(callback) {
+  console.log('start question');
   callback(await inquirer.prompt(questions));
 }

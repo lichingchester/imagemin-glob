@@ -69,5 +69,6 @@ var questions = [{
 }];
 
 exports.default = async function cli(callback) {
+  console.log('start question');
   callback((await _inquirer2.default.prompt(questions)));
 };

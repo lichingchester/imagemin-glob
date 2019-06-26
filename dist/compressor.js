@@ -51,7 +51,7 @@ async function compile(path, build, quality, type, output) {
     plugins: plugin
   });
 
-  console.log(files);
+  // console.log(files);
 }
 
 function compress(_ref) {
@@ -66,4 +66,6 @@ function compress(_ref) {
       compile(path, build, quality, type, output);
     });
   });
+
+  console.log('compress end');
 }
