@@ -16,6 +16,7 @@ module.exports = {
   },
   rules: {
     'no-console': 0,
-    'no-unused-expressions': ["error", { "allowShortCircuit": true }]
+    'no-unused-expressions': ["error", { "allowShortCircuit": true }],
+    'radix': ["error", "as-needed"]
   },
 };

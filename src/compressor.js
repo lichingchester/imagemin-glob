@@ -1,50 +1,56 @@
+import glob from 'glob';
+import _cliProgress from 'cli-progress';
 import imagemin from 'imagemin';
 import imageminJpegtran from 'imagemin-jpegtran';
 import imageminMozjpeg from 'imagemin-mozjpeg';
 import imageminOptipng from 'imagemin-optipng';
 import imageminPngquant from 'imagemin-pngquant';
 
-import glob from 'glob';
-
-async function compile(path, build, quality, type, output) {
-  let plugin = [];
-  if (type === 'lossy') {
-    plugin = [
-      imageminMozjpeg({
-        quality: quality * 100,
-      }),
-      imageminPngquant({
-        quality: [quality, 1],
-      }),
-    ];
-  } else {
-    plugin = [
-      imageminJpegtran({
-        quality: quality * 100,
-      }),
-      imageminOptipng({
-        quality: [quality, 1],
-      }),
-    ];
-  }
-
-  const files = await imagemin([path], `${build}/${output}`, {
-    plugins: plugin,
-  });
-
-  console.log(files);
-}
+import { PATH_MIN_IMAGES } from './config';
 
 export default function compress({
   path,
-  build,
   quality,
   type,
 }) {
+  const progress = new _cliProgress.Bar({
+    stopOnComplete: true,
+  }, _cliProgress.Presets.shades_classic);
+
   glob(`${path}/**/*.{jpg,png}`, (er, files) => {
-    files.forEach((file) => {
-      const output = file.substring(0, file.lastIndexOf('images/'));
-      compile(path, build, quality, type, output);
+    progress.start(files.length, 0);
+
+    files.forEach((filePath) => {
+      const buildPath = filePath.replace(`${path}/`, '');
+      const output = buildPath.substring(0, buildPath.lastIndexOf('/'));
+
+      (async () => {
+        if (type === 'lossy') {
+          await imagemin([filePath], `${PATH_MIN_IMAGES}/${output}`, {
+            plugins: [
+              imageminMozjpeg({
+                quality: parseFloat(quality) * 100,
+              }),
+              imageminPngquant({
+                quality: [parseFloat(quality), 1],
+              }),
+            ],
+          });
+        } else {
+          await imagemin([filePath], `${PATH_MIN_IMAGES}/${output}`, {
+            plugins: [
+              imageminJpegtran({
+                quality: parseFloat(quality) * 100,
+              }),
+              imageminOptipng({
+                quality: [parseFloat(quality), 1],
+              }),
+            ],
+          });
+        }
+
+        progress.increment();
+      })();
     });
   });
 }
