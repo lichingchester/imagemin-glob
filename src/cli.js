@@ -1,5 +1,5 @@
 import inquirer from 'inquirer';
-import { isExists } from './fse';
+import isExists from './fse';
 import { DEFAULT_QUALITY } from './config';
 
 const questions = [
@@ -8,19 +8,6 @@ const questions = [
     name: 'path',
     message: 'Enter the path of the original images directory: ',
     default: './images',
-    validate: (value) => {
-      if (!isExists(value)) {
-        return 'Directory not exists! ';
-      }
-
-      return true;
-    },
-  },
-  {
-    type: 'input',
-    name: 'build',
-    message: 'Enter the path of the build directory: ',
-    default: './build',
     validate: (value) => {
       if (!isExists(value)) {
         return 'Directory not exists! ';

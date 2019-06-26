@@ -10,6 +10,8 @@ var _inquirer2 = _interopRequireDefault(_inquirer);
 
 var _fse = require('./fse');
 
+var _fse2 = _interopRequireDefault(_fse);
+
 var _config = require('./config');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -20,19 +22,7 @@ var questions = [{
   message: 'Enter the path of the original images directory: ',
   default: './images',
   validate: function validate(value) {
-    if (!(0, _fse.isExists)(value)) {
-      return 'Directory not exists! ';
-    }
-
-    return true;
-  }
-}, {
-  type: 'input',
-  name: 'build',
-  message: 'Enter the path of the build directory: ',
-  default: './build',
-  validate: function validate(value) {
-    if (!(0, _fse.isExists)(value)) {
+    if (!(0, _fse2.default)(value)) {
       return 'Directory not exists! ';
     }
 
