@@ -1,25 +1,173 @@
+import inquirer from 'inquirer';
 import fse from 'fs-extra';
-import cli from './cli';
-import compressor from './compressor';
+import glob from 'glob-promise';
+import imagemin from 'imagemin';
+import imageminJpegtran from 'imagemin-jpegtran';
+import imageminMozjpeg from 'imagemin-mozjpeg';
+import imageminOptipng from 'imagemin-optipng';
+import imageminPngquant from 'imagemin-pngquant';
+import Logger from './Logger';
 import {
-  PATH_ORI_IMAGES, PATH_MIN_IMAGES,
+  SOURCE_PATH, BUILD_PATH, QUALITY, PLUGIN,
 } from './config';
+import Progress from './Progress';
+import questions from './questions';
 
-async function run() {
+const bar = new Progress();
+const logger = new Logger(true);
+
+async function cli() {
+  logger.log('start question');
+
   try {
-    await fse.ensureDir(PATH_ORI_IMAGES);
-    console.log('ensureDir', PATH_ORI_IMAGES);
-
-    await fse.ensureDir(PATH_MIN_IMAGES);
-    console.log('ensureDir', PATH_MIN_IMAGES);
-
-    await fse.emptyDir(PATH_MIN_IMAGES);
-    console.log('emptyDir', PATH_MIN_IMAGES);
-
-    cli(compressor);
+    return await inquirer.prompt(questions);
   } catch (error) {
-    console.log(error);
+    console.log('TCL: cli -> error', error);
+  }
+
+  logger.log('end question');
+
+  return false;
+}
+
+async function ensureSourceFolder() {
+  try {
+    await fse.ensureDir(SOURCE_PATH);
+    logger.log('ensure SOURCE_PATH', SOURCE_PATH);
+  } catch (error) {
+    console.log('TCL: ensureSourceFolder -> error', error);
   }
 }
 
-run();
+async function ensureBuildFolder() {
+  try {
+    await fse.ensureDir(BUILD_PATH);
+    logger.log('ensure BUILD_PATH', BUILD_PATH);
+  } catch (error) {
+    console.log('TCL: ensureBuildFolder -> error', error);
+  }
+}
+
+async function emptyBuildFolder() {
+  try {
+    await fse.ensureDir(BUILD_PATH);
+    logger.log('empty BUILD_PATH', BUILD_PATH);
+  } catch (error) {
+    console.log('TCL: emptyBuildFolder -> error', error);
+  }
+}
+
+async function getSources({ path }) {
+  try {
+    return await glob(`${path}/**/*.{jpg,png}`);
+  } catch (error) {
+    console.log('TCL: getSources -> error', error);
+  }
+
+  return false;
+}
+
+function getOutputPath(source, image) {
+  const build = image.replace(`${source}/`, '');
+  return build.substring(0, build.lastIndexOf('/'));
+}
+
+function getJpegOptions(quality) {
+  return {
+    quality: parseFloat(quality) * 100,
+  };
+}
+
+function getPngOptions(quality) {
+  return {
+    quality: [parseFloat(quality), 1],
+  };
+}
+
+async function lossyCompress(type, quality, image, output) {
+  await imagemin([image], `${BUILD_PATH}/${output}`, {
+    plugins: [
+      imageminMozjpeg(getJpegOptions(quality)),
+      imageminPngquant(getPngOptions(quality)),
+    ],
+  });
+
+  bar.update();
+}
+
+async function losslessCompress(type, quality, image, output) {
+  await imagemin([image], `${BUILD_PATH}/${output}`, {
+    plugins: [
+      imageminJpegtran(getJpegOptions(quality)),
+      imageminOptipng(getPngOptions(quality)),
+    ],
+  });
+
+  bar.update();
+}
+
+async function compress(
+  images,
+  {
+    path = SOURCE_PATH,
+    quality = QUALITY,
+    type = PLUGIN,
+  },
+) {
+  const compressors = [];
+
+  images.forEach((image) => {
+    const output = getOutputPath(path, image);
+
+    if (type === 'lossy') {
+      compressors.push(lossyCompress(type, quality, image, output));
+    } else {
+      compressors.push(losslessCompress(type, quality, image, output));
+    }
+  });
+
+  try {
+    await Promise.all(compressors);
+  } catch (error) {
+    console.log('TCL: compress -> error', error);
+  }
+}
+
+
+/**
+ * Main
+ * ------------
+ * control the main program process
+ */
+async function main() {
+  logger.log('code start');
+
+  // ask question
+  const result = await cli();
+  // console.log('TCL: main -> result', result);
+
+  // create source, build folder, and empty build folder
+  await ensureSourceFolder();
+  await ensureBuildFolder();
+  await emptyBuildFolder();
+  logger.log('environment ready');
+
+  // read sources
+  const images = await getSources(result);
+  bar.setWidth(images.length);
+  // console.log('TCL: getSources -> images', images);
+
+  // run compressor
+  logger.log('compress start');
+  bar.start();
+
+  await compress(images, result);
+  logger.log('compress end');
+
+  bar.stop();
+
+  // end, and open build folder
+  logger.log('code end');
+}
+
+main();
