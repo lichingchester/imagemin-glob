@@ -1,25 +1,11 @@
-import fse from 'fs-extra';
-import cli from './cli';
-import compressor from './compressor';
-import {
-  PATH_ORI_IMAGES, PATH_MIN_IMAGES,
-} from './config';
+console.log('code start');
 
-async function run() {
-  try {
-    await fse.ensureDir(PATH_ORI_IMAGES);
-    console.log('ensureDir', PATH_ORI_IMAGES);
+// ask question
 
-    await fse.ensureDir(PATH_MIN_IMAGES);
-    console.log('ensureDir', PATH_MIN_IMAGES);
+// create source, build folder, and empty build folder
 
-    await fse.emptyDir(PATH_MIN_IMAGES);
-    console.log('emptyDir', PATH_MIN_IMAGES);
+// run compressor
 
-    cli(compressor);
-  } catch (error) {
-    console.log(error);
-  }
-}
+// end, and open build folder
 
-run();
+console.log('code end');
