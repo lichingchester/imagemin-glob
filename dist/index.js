@@ -8,9 +8,9 @@ var _fsExtra = require('fs-extra');
 
 var _fsExtra2 = _interopRequireDefault(_fsExtra);
 
-var _glob = require('glob');
+var _globPromise = require('glob-promise');
 
-var _glob2 = _interopRequireDefault(_glob);
+var _globPromise2 = _interopRequireDefault(_globPromise);
 
 var _cliProgress2 = require('cli-progress');
 
@@ -48,13 +48,15 @@ var _questions2 = _interopRequireDefault(_questions);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+var bar = new _Progress2.default();
+
 // logging function
 function log(status) {
   console.log('----- ' + status + ' -----');
 }
 
 async function cli() {
-  log('start question');
+  // log('start question');
 
   try {
     return await _inquirer2.default.prompt(_questions2.default);
@@ -62,44 +64,109 @@ async function cli() {
     console.log('TCL: cli -> error', error);
   }
 
-  log('end question');
+  // log('end question');
 
   return false;
 }
 
 async function ensureSourceFolder() {
-  await _fsExtra2.default.ensureDir(_config.SOURCE_PATH);
-  log('ensure SOURCE_PATH', _config.SOURCE_PATH);
+  try {
+    await _fsExtra2.default.ensureDir(_config.SOURCE_PATH);
+    // log('ensure SOURCE_PATH', SOURCE_PATH);
+  } catch (error) {
+    console.log('TCL: ensureSourceFolder -> error', error);
+  }
 }
 
 async function ensureBuildFolder() {
-  await _fsExtra2.default.ensureDir(_config.BUILD_PATH);
-  log('ensure BUILD_PATH', _config.BUILD_PATH);
+  try {
+    await _fsExtra2.default.ensureDir(_config.BUILD_PATH);
+    // log('ensure BUILD_PATH', BUILD_PATH);
+  } catch (error) {
+    console.log('TCL: ensureBuildFolder -> error', error);
+  }
 }
 
 async function emptyBuildFolder() {
-  await _fsExtra2.default.ensureDir(_config.BUILD_PATH);
-  log('empty BUILD_PATH', _config.BUILD_PATH);
+  try {
+    await _fsExtra2.default.ensureDir(_config.BUILD_PATH);
+    // log('empty BUILD_PATH', BUILD_PATH);
+  } catch (error) {
+    console.log('TCL: emptyBuildFolder -> error', error);
+  }
 }
 
-function getSources(_ref) {
+async function getSources(_ref) {
   var path = _ref.path;
 
-  var images = [];
-  (0, _glob2.default)(path + '/**/*.{jpg,png}', function (er, files) {
-    images = files;
-  });
-  console.log('TCL: getSources -> images', images);
+  try {
+    return await (0, _globPromise2.default)(path + '/**/*.{jpg,png}');
+  } catch (error) {
+    console.log('TCL: getSources -> error', error);
+  }
+
+  return false;
 }
 
-// async function compress({
-//   path = SOURCE_PATH,
-//   quality = QUALITY,
-//   type = PLUGIN,
-// }) {
+function getOutputPath(source, image) {
+  var build = image.replace(source + '/', '');
+  return build.substring(0, build.lastIndexOf('/'));
+}
 
-// }
+function getJpegOptions(quality) {
+  return {
+    quality: parseFloat(quality) * 100
+  };
+}
 
+function getPngOptions(quality) {
+  return {
+    quality: [parseFloat(quality), 1]
+  };
+}
+
+async function lossyCompress(type, quality, image, output) {
+  await (0, _imagemin2.default)([image], _config.BUILD_PATH + '/' + output, {
+    plugins: [(0, _imageminMozjpeg2.default)(getJpegOptions(quality)), (0, _imageminPngquant2.default)(getPngOptions(quality))]
+  });
+
+  bar.update();
+}
+
+async function losslessCompress(type, quality, image, output) {
+  await (0, _imagemin2.default)([image], _config.BUILD_PATH + '/' + output, {
+    plugins: [(0, _imageminJpegtran2.default)(getJpegOptions(quality)), (0, _imageminOptipng2.default)(getPngOptions(quality))]
+  });
+
+  bar.update();
+}
+
+async function compress(images, _ref2) {
+  var _ref2$path = _ref2.path,
+      path = _ref2$path === undefined ? _config.SOURCE_PATH : _ref2$path,
+      _ref2$quality = _ref2.quality,
+      quality = _ref2$quality === undefined ? _config.QUALITY : _ref2$quality,
+      _ref2$type = _ref2.type,
+      type = _ref2$type === undefined ? _config.PLUGIN : _ref2$type;
+
+  var compressors = [];
+
+  images.forEach(function (image) {
+    var output = getOutputPath(path, image);
+
+    if (type === 'lossy') {
+      compressors.push(lossyCompress(type, quality, image, output));
+    } else {
+      compressors.push(losslessCompress(type, quality, image, output));
+    }
+  });
+
+  try {
+    await Promise.all(compressors);
+  } catch (error) {
+    console.log('TCL: compress -> error', error);
+  }
+}
 
 /**
  * Main
@@ -107,30 +174,34 @@ function getSources(_ref) {
  * control the main program process
  */
 async function main() {
-  log('code start');
+  // log('code start');
 
   // ask question
   var result = await cli();
-  console.log('TCL: main -> result', result);
+  // console.log('TCL: main -> result', result);
 
   // create source, build folder, and empty build folder
   await ensureSourceFolder();
   await ensureBuildFolder();
   await emptyBuildFolder();
-  log('environment ready');
-
-  var bar = new _Progress2.default();
-  bar.start();
+  // log('environment ready');
 
   // read sources
-  var images = getSources(result);
+  var images = await getSources(result);
+  bar.setWidth(images.length);
+  // console.log('TCL: getSources -> images', images);
 
   // run compressor
-  // await compress(result);
-  // log('compressed');
+  // log('compress start');
+  bar.start();
+
+  await compress(images, result);
+  // log('compress end');
+
+  bar.stop();
 
   // end, and open build folder
-  log('code end');
+  // log('code end');
 }
 
 main();
