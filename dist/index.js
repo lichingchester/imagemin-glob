@@ -12,10 +12,6 @@ var _globPromise = require('glob-promise');
 
 var _globPromise2 = _interopRequireDefault(_globPromise);
 
-var _cliProgress2 = require('cli-progress');
-
-var _cliProgress3 = _interopRequireDefault(_cliProgress2);
-
 var _imagemin = require('imagemin');
 
 var _imagemin2 = _interopRequireDefault(_imagemin);
@@ -36,6 +32,10 @@ var _imageminPngquant = require('imagemin-pngquant');
 
 var _imageminPngquant2 = _interopRequireDefault(_imageminPngquant);
 
+var _Logger = require('./Logger');
+
+var _Logger2 = _interopRequireDefault(_Logger);
+
 var _config = require('./config');
 
 var _Progress = require('./Progress');
@@ -49,14 +49,10 @@ var _questions2 = _interopRequireDefault(_questions);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var bar = new _Progress2.default();
-
-// logging function
-function log(status) {
-  console.log('----- ' + status + ' -----');
-}
+var logger = new _Logger2.default(true);
 
 async function cli() {
-  // log('start question');
+  logger.log('start question');
 
   try {
     return await _inquirer2.default.prompt(_questions2.default);
@@ -64,7 +60,7 @@ async function cli() {
     console.log('TCL: cli -> error', error);
   }
 
-  // log('end question');
+  logger.log('end question');
 
   return false;
 }
@@ -72,7 +68,7 @@ async function cli() {
 async function ensureSourceFolder() {
   try {
     await _fsExtra2.default.ensureDir(_config.SOURCE_PATH);
-    // log('ensure SOURCE_PATH', SOURCE_PATH);
+    logger.log('ensure SOURCE_PATH', _config.SOURCE_PATH);
   } catch (error) {
     console.log('TCL: ensureSourceFolder -> error', error);
   }
@@ -81,7 +77,7 @@ async function ensureSourceFolder() {
 async function ensureBuildFolder() {
   try {
     await _fsExtra2.default.ensureDir(_config.BUILD_PATH);
-    // log('ensure BUILD_PATH', BUILD_PATH);
+    logger.log('ensure BUILD_PATH', _config.BUILD_PATH);
   } catch (error) {
     console.log('TCL: ensureBuildFolder -> error', error);
   }
@@ -90,7 +86,7 @@ async function ensureBuildFolder() {
 async function emptyBuildFolder() {
   try {
     await _fsExtra2.default.ensureDir(_config.BUILD_PATH);
-    // log('empty BUILD_PATH', BUILD_PATH);
+    logger.log('empty BUILD_PATH', _config.BUILD_PATH);
   } catch (error) {
     console.log('TCL: emptyBuildFolder -> error', error);
   }
@@ -174,7 +170,7 @@ async function compress(images, _ref2) {
  * control the main program process
  */
 async function main() {
-  // log('code start');
+  logger.log('code start');
 
   // ask question
   var result = await cli();
@@ -184,7 +180,7 @@ async function main() {
   await ensureSourceFolder();
   await ensureBuildFolder();
   await emptyBuildFolder();
-  // log('environment ready');
+  logger.log('environment ready');
 
   // read sources
   var images = await getSources(result);
@@ -192,16 +188,16 @@ async function main() {
   // console.log('TCL: getSources -> images', images);
 
   // run compressor
-  // log('compress start');
+  logger.log('compress start');
   bar.start();
 
   await compress(images, result);
-  // log('compress end');
+  logger.log('compress end');
 
   bar.stop();
 
   // end, and open build folder
-  // log('code end');
+  logger.log('code end');
 }
 
 main();

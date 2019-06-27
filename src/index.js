@@ -1,12 +1,12 @@
 import inquirer from 'inquirer';
 import fse from 'fs-extra';
 import glob from 'glob-promise';
-import _cliProgress from 'cli-progress';
 import imagemin from 'imagemin';
 import imageminJpegtran from 'imagemin-jpegtran';
 import imageminMozjpeg from 'imagemin-mozjpeg';
 import imageminOptipng from 'imagemin-optipng';
 import imageminPngquant from 'imagemin-pngquant';
+import Logger from './Logger';
 import {
   SOURCE_PATH, BUILD_PATH, QUALITY, PLUGIN,
 } from './config';
@@ -14,14 +14,10 @@ import Progress from './Progress';
 import questions from './questions';
 
 const bar = new Progress();
-
-// logging function
-function log(status) {
-  console.log(`----- ${status} -----`);
-}
+const logger = new Logger(true);
 
 async function cli() {
-  // log('start question');
+  logger.log('start question');
 
   try {
     return await inquirer.prompt(questions);
@@ -29,7 +25,7 @@ async function cli() {
     console.log('TCL: cli -> error', error);
   }
 
-  // log('end question');
+  logger.log('end question');
 
   return false;
 }
@@ -37,7 +33,7 @@ async function cli() {
 async function ensureSourceFolder() {
   try {
     await fse.ensureDir(SOURCE_PATH);
-    // log('ensure SOURCE_PATH', SOURCE_PATH);
+    logger.log('ensure SOURCE_PATH', SOURCE_PATH);
   } catch (error) {
     console.log('TCL: ensureSourceFolder -> error', error);
   }
@@ -46,7 +42,7 @@ async function ensureSourceFolder() {
 async function ensureBuildFolder() {
   try {
     await fse.ensureDir(BUILD_PATH);
-    // log('ensure BUILD_PATH', BUILD_PATH);
+    logger.log('ensure BUILD_PATH', BUILD_PATH);
   } catch (error) {
     console.log('TCL: ensureBuildFolder -> error', error);
   }
@@ -55,7 +51,7 @@ async function ensureBuildFolder() {
 async function emptyBuildFolder() {
   try {
     await fse.ensureDir(BUILD_PATH);
-    // log('empty BUILD_PATH', BUILD_PATH);
+    logger.log('empty BUILD_PATH', BUILD_PATH);
   } catch (error) {
     console.log('TCL: emptyBuildFolder -> error', error);
   }
@@ -144,7 +140,7 @@ async function compress(
  * control the main program process
  */
 async function main() {
-  // log('code start');
+  logger.log('code start');
 
   // ask question
   const result = await cli();
@@ -154,7 +150,7 @@ async function main() {
   await ensureSourceFolder();
   await ensureBuildFolder();
   await emptyBuildFolder();
-  // log('environment ready');
+  logger.log('environment ready');
 
   // read sources
   const images = await getSources(result);
@@ -162,16 +158,16 @@ async function main() {
   // console.log('TCL: getSources -> images', images);
 
   // run compressor
-  // log('compress start');
+  logger.log('compress start');
   bar.start();
 
   await compress(images, result);
-  // log('compress end');
+  logger.log('compress end');
 
   bar.stop();
 
   // end, and open build folder
-  // log('code end');
+  logger.log('code end');
 }
 
 main();
