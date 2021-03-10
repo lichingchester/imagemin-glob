@@ -1,4 +1,4 @@
-# imagemin-glob v2.0.0
+# imagemin-glob v3.0.0
 minifying images with glob  
 
 ## Usage
